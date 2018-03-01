@@ -111,16 +111,16 @@ class OneLineModel(AbstractModel):
         return 'model_queue_length:\t{0}'.format(len(self.queue))
 
 
-class OneLineOnePickupModel(AbstractModel):
+class OneLinePickupModel(AbstractModel):
 
     PARALLEL_PICKUP = 5
     PICKUP_SPEED_TO_POOL_SIZE = 0.1
 
     def __init__(self, window_num, worker_num, person_generator):
-        super(OneLineOnePickupModel, self).__init__(window_num, worker_num, person_generator)
+        super(OneLinePickupModel, self).__init__(window_num, worker_num, person_generator)
         self.queue = Queue()
         self.pickup_order_queue = Queue()
-        self.pickup_space = [None for _ in range(OneLineOnePickupModel.PARALLEL_PICKUP)]
+        self.pickup_space = [None for _ in range(OneLinePickupModel.PARALLEL_PICKUP)]
         self.pickup_people_pool = set()
 
         def pickup_call(pos):
@@ -134,7 +134,7 @@ class OneLineOnePickupModel(AbstractModel):
                 order.person.drink_wait_time.end()
 
             time_scheduler.schedule(round(len(self.pickup_people_pool) *
-                                          OneLineOnePickupModel.PICKUP_SPEED_TO_POOL_SIZE),
+                                          OneLinePickupModel.PICKUP_SPEED_TO_POOL_SIZE),
                                     func(pickup, order, pos))
 
         for i in range(len(self.pickup_space)):
@@ -143,7 +143,7 @@ class OneLineOnePickupModel(AbstractModel):
                                                     func(pickup_call, i))
 
     def enqueue(self, person):
-        super(OneLineOnePickupModel, self).enqueue(person)
+        super(OneLinePickupModel, self).enqueue(person)
         self.queue.put(person)
 
     def dequeue(self, window):
@@ -196,10 +196,10 @@ class MultiLineModel(OneLineModel):
         return 'model_queue_length:\t{0}'.format('\t'.join([str(len(q)) for q in self.queues]))
 
 
-class MultiLineOnePickupModel(OneLineOnePickupModel):
+class MultiLinePickupModel(OneLinePickupModel):
 
     def __init__(self, window_num, worker_num, person_generator):
-        super(MultiLineOnePickupModel, self).__init__(window_num, worker_num, person_generator)
+        super(MultiLinePickupModel, self).__init__(window_num, worker_num, person_generator)
         del self.queue
         self.queues = [Queue() for _ in range(window_num)]
 
