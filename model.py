@@ -37,6 +37,9 @@ def generator(model):
 
 
 def run_model():
+    # model = OneLineModel(window_num=2, worker_num=5, person_generator=generator)
+    # model = OneLinePickupModel(window_num=2, worker_num=5, person_generator=generator)
+    # model = MultiLineModel(window_num=2, worker_num=5, person_generator=generator)
     model = MultiLineOnePickupModel(window_num=2, worker_num=5, person_generator=generator)
 
     for _ in range(SIMULATION_TIME):
