@@ -70,7 +70,7 @@ def run_model(model, simulation_time):
                                                                         round(np.std(order_cost_time), 2)))
     total_item_num = np.sum(np.array([len(p.items) for p in Person.people_list if p.served]))
     print('average_time_per_item_ordered:\t{0}'.format(round(np.sum(total_wait_time) / total_item_num, 2)))
-    assert total_item_num >= np.sum(np.array([len(o.items) for o in Order.order_list if o.ready]))
+    assert total_item_num <= np.sum(np.array([len(o.items) for o in Order.order_list if o.ready]))
     print('average_lambda:\t{0}'.format(round(np.average(lambdas), 2)))
     print()
 

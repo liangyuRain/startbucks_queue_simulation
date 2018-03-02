@@ -3,7 +3,7 @@ from inspect import signature
 
 
 def func(f, *args, **kwargs):
-    return lambda: f(*args[:min(len(signature(f).parameters), len(*args))], **kwargs)
+    return lambda: f(*args[:len(signature(f).parameters)], **kwargs)
 
 
 class WorkShop:
@@ -75,7 +75,7 @@ class Window:
         condition_scheduler.schedule_every_time(lambda: self.serving is None and not self.model.exhausted(self),
                                                 lambda: self.model.dequeue(self))
 
-    def serve(self, person):
+    def serve(self, person, casher_work=False):
         if person is None:
             return
         self.serving = person
@@ -88,7 +88,21 @@ class Window:
                                          func(self.model.func_after_ready,
                                               self, person, order))
 
-            if Window.RAPID_PICKUP:
+            if casher_work:
+
+                def casher(order):
+                    if order.priority_queue.empty():
+                        return
+                    item = order.priority_queue.get()
+
+                    def increment_ready(order):
+                        order.ready_num += 1
+                        casher(order)
+
+                    time_scheduler.schedule(item.time_cost, func(increment_ready, order))
+
+                casher(order)
+            elif Window.RAPID_PICKUP:
                 q = Queue()
                 while not order.priority_queue.empty() and \
                         order.priority_queue[-1].time_cost <= Window.RAPID_TIME_STANDARD:

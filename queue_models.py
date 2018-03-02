@@ -96,7 +96,7 @@ class OneLineModel(AbstractModel):
             person.order_wait_time.end()
             window.serving = person
             time_scheduler.schedule((self.windows.index(window) + 1) * TIME_TO_WINDOW,
-                                    func(window.serve, person))
+                                    func(window.serve, person, True))
 
     def exhausted(self, window):
         return self.queue.empty()
@@ -145,7 +145,12 @@ class OneLinePickupModel(AbstractModel):
         self.queue.put(person)
 
     def dequeue(self, window):
-        OneLineModel.dequeue(self, window)
+        if not self.queue.empty():
+            person = self.queue.get()
+            person.order_wait_time.end()
+            window.serving = person
+            time_scheduler.schedule((self.windows.index(window) + 1) * TIME_TO_WINDOW,
+                                    func(window.serve, person, False))
 
     def exhausted(self, window):
         return self.queue.empty()
@@ -185,7 +190,7 @@ class MultiLineModel(OneLineModel):
             person = q.get()
             person.order_wait_time.end()
             window.serving = person
-            time_scheduler.schedule(TIME_TO_WINDOW, func(window.serve, person))
+            time_scheduler.schedule(TIME_TO_WINDOW, func(window.serve, person, True))
 
     def exhausted(self, window):
         return self.queues[self.windows.index(window)].empty()
@@ -205,7 +210,12 @@ class MultiLinePickupModel(OneLinePickupModel):
         MultiLineModel.enqueue(self, person)
 
     def dequeue(self, window):
-        MultiLineModel.dequeue(self, window)
+        q = self.queues[self.windows.index(window)]
+        if not q.empty():
+            person = q.get()
+            person.order_wait_time.end()
+            window.serving = person
+            time_scheduler.schedule(TIME_TO_WINDOW, func(window.serve, person, False))
 
     def exhausted(self, window):
         return MultiLineModel.exhausted(self, window)
