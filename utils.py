@@ -1,5 +1,4 @@
 class Timer:
-
     timer_list = set()
 
     def __init__(self, initial=0):
@@ -55,6 +54,10 @@ class Person:
     def __repr__(self):
         return str(vars(self))
 
+    @staticmethod
+    def reset():
+        Person.people_list.clear()
+
 
 class Order:
     order_list = []
@@ -74,6 +77,10 @@ class Order:
         del dic['priority_queue']
         del dic['items']
         return str(dic)
+
+    @staticmethod
+    def reset():
+        Order.order_list.clear()
 
 
 class TimeScheduler:
@@ -121,6 +128,12 @@ class TimeScheduler:
             else:
                 func()
 
+    def reset(self):
+        self.time_line = Queue()
+        self.every_time = {}
+        self.counter = 0
+        self.time = 0
+
 
 class ConditionScheduler:
 
@@ -166,6 +179,11 @@ class ConditionScheduler:
                     else:
                         t[1]()
                     no_end = True
+
+    def reset(self):
+        self.conditions = []
+        self.every_time = {}
+        self.counter = 0
 
 
 time_scheduler = TimeScheduler()

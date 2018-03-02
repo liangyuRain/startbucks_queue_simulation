@@ -65,13 +65,12 @@ people_count:\t{1}
 people_served:\t{2}
 windows_busy:\t{3}
 {4}
-{5}
-""".format(time_scheduler.time,
-           self.people_count,
-           self.people_served,
-           '\t'.join(['0' if w.available() else '1' for w in self.windows]),
-           self.stat(),
-           self.workshop.stat())
+{5}""".format(time_scheduler.time,
+              self.people_count,
+              self.people_served,
+              '\t'.join(['0' if w.available() else '1' for w in self.windows]),
+              self.stat(),
+              self.workshop.stat())
 
 
 # Model manage: Person.served,
@@ -112,7 +111,6 @@ class OneLineModel(AbstractModel):
 
 
 class OneLinePickupModel(AbstractModel):
-
     PARALLEL_PICKUP = 5
     PICKUP_SPEED_TO_POOL_SIZE = 0.1
 
@@ -139,7 +137,7 @@ class OneLinePickupModel(AbstractModel):
 
         for i in range(len(self.pickup_space)):
             condition_scheduler.schedule_every_time(func(lambda pos: self.pickup_space[pos] is None and
-                                                          not self.pickup_order_queue.empty(), i),
+                                                                     not self.pickup_order_queue.empty(), i),
                                                     func(pickup_call, i))
 
     def enqueue(self, person):

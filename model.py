@@ -1,8 +1,11 @@
 import numpy as np
 from queue_models import *
+import sys
 
 SECOND_PER_PERSON = 5
-SIMULATION_TIME = 60 * 60
+
+NUM_OF_WINDOW = 2
+NUM_OF_WORKER = 5
 
 item_list = []
 
@@ -15,6 +18,7 @@ pops = np.array([item.popularity for item in item_list])
 probs = pops / np.sum(pops)
 item_num_distribution = np.array([83, 12, 2, 3])
 
+lambdas = []
 
 def generator(model):
     alpha = 1 / SECOND_PER_PERSON
@@ -24,33 +28,30 @@ def generator(model):
     accumulate = 0
     person_num = 0
     while True:
-        accumulate += np.random.poisson(alpha * np.exp(-beta * (model.people_count - model.people_served)))
+        lam = alpha * np.exp(-beta * (model.people_count - model.people_served))
+        lambdas.append(lam)
+        accumulate += np.random.poisson(lam)
         l = []
         while accumulate >= 1:
             accumulate -= 1
             person_num += 1
             p = Person(person_num, [])
             for _ in range(np.random.poisson(items_per_person - 1) + 1):
-                p.items.append(np.random.choice(item_list,p=probs))
+                p.items.append(np.random.choice(item_list, p=probs))
             l.append(p)
         yield l
 
 
-def run_model():
-    # model = OneLineModel(window_num=2, worker_num=5, person_generator=generator)
-    # model = OneLinePickupModel(window_num=2, worker_num=5, person_generator=generator)
-    # model = MultiLineModel(window_num=2, worker_num=5, person_generator=generator)
-    model = MultiLinePickupModel(window_num=2, worker_num=5, person_generator=generator)
-
-    for _ in range(SIMULATION_TIME):
-        print(model.print_stat())
+def run_model(model, simulation_time):
+    print(type(model).__name__)
+    for _ in range(simulation_time):
+        # print(model.print_stat())
         # if time_scheduler.time % 60 == 0:
         #     input()
         time_scheduler.time_pass()
         condition_scheduler.time_pass()
     print(model.print_stat())
 
-    print()
     print('total_people_arrived:\t{0}'.format(model.people_count))
     print('total_people_served:\t{0}'.format(model.people_served))
     print('total_order_placed:\t{0}'.format(model.workshop.order_count))
@@ -70,7 +71,22 @@ def run_model():
     total_item_num = np.sum(np.array([len(p.items) for p in Person.people_list if p.served]))
     print('average_time_per_item_ordered:\t{0}'.format(round(np.sum(total_wait_time) / total_item_num, 2)))
     assert total_item_num == np.sum(np.array([len(o.items) for o in Order.order_list if o.ready]))
+    print('average_lambda:\t{0}'.format(round(np.average(lambdas), 2)))
+    print()
 
 
 if __name__ == '__main__':
-    run_model()
+    assert len(sys.argv) == 2, 'illegal arguments'
+    simulation_time = int(sys.argv[1])
+    models = [OneLineModel,
+              OneLinePickupModel,
+              MultiLineModel,
+              MultiLinePickupModel]
+    for m in models:
+        time_scheduler.reset()
+        condition_scheduler.reset()
+        Person.reset()
+        Order.reset()
+        lambdas.clear()
+        run_model(m(window_num=NUM_OF_WINDOW, worker_num=NUM_OF_WORKER, person_generator=generator),
+                  simulation_time)

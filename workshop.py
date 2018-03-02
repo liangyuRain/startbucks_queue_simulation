@@ -9,7 +9,6 @@ def func(f, *args, **kwargs):
 class WorkShop:
 
     def __init__(self, worker_num):
-        super(WorkShop, self).__init__()
         self.worker_num = worker_num
         self.queue = Queue()
         condition_scheduler.schedule_every_time(lambda: not self.queue.empty() and self.queue[0].priority_queue.empty(),
@@ -18,7 +17,6 @@ class WorkShop:
         self.order_count = 0
         self.order_finished = 0
         self.workers = [[True, None, None] for _ in range(worker_num)]
-
 
         def end_worker(worker, order):
             order.ready_num += 1
@@ -65,7 +63,6 @@ class WorkShop:
 
 
 class Window:
-
     RAPID_PICKUP = True
     RAPID_TIME_STANDARD = 10
     CASHIER_TIME_COST = 10

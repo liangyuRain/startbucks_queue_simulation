@@ -2,7 +2,6 @@ import time
 import os.path
 import sys
 
-
 if __name__ == '__main__':
     version = sys.hexversion >= 0x03000000
     i = 1
