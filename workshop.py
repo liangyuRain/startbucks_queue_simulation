@@ -3,7 +3,7 @@ from inspect import signature
 
 
 def func(f, *args, **kwargs):
-    return lambda: f(*args[:len(signature(f).parameters)], **kwargs)
+    return lambda: f(*args[:min(len(signature(f).parameters), len(*args))], **kwargs)
 
 
 class WorkShop:

@@ -131,8 +131,8 @@ class OneLinePickupModel(AbstractModel):
                 order.person.served = True
                 order.person.drink_wait_time.end()
 
-            time_scheduler.schedule(round(len(self.pickup_people_pool) *
-                                          OneLinePickupModel.PICKUP_SPEED_TO_POOL_SIZE),
+            time_scheduler.schedule(int(len(self.pickup_people_pool) *
+                                        OneLinePickupModel.PICKUP_SPEED_TO_POOL_SIZE + 1) * 3,
                                     func(pickup, order, pos))
 
         for i in range(len(self.pickup_space)):
