@@ -49,6 +49,7 @@ class Person:
         self.order_wait_time = Timer()
         self.drink_wait_time = Timer()
         self.total_wait_time = Timer()
+        self.enqueued_time = None
         Person.people_list.append(self)
 
     def __repr__(self):

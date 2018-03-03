@@ -1,6 +1,7 @@
 import numpy as np
 from queue_models import *
 import sys
+import progressbar
 
 SECOND_PER_PERSON = 5
 
@@ -20,6 +21,7 @@ item_num_distribution = np.array([73, 19, 5, 3])
 
 lambdas = []
 
+
 def generator(model):
     alpha = 1 / SECOND_PER_PERSON
     beta = np.log(2) / 15
@@ -28,7 +30,8 @@ def generator(model):
     accumulate = 0
     person_num = 0
     while True:
-        lam = alpha * np.exp(-beta * (model.people_count - model.people_served))
+        # lam = alpha * np.exp(-beta * (model.people_count - model.people_served))
+        lam = alpha
         lambdas.append(lam)
         accumulate += np.random.poisson(lam)
         l = []
@@ -42,15 +45,53 @@ def generator(model):
         yield l
 
 
+order_queue_length = []
+total_population_vs_time = []
+wait_time_per_item = []
+
+# people_served_total = [], []
+
+
 def run_model(model, simulation_time):
+    global total_population_vs_time, wait_time_per_item
     print(type(model).__name__)
-    for _ in range(simulation_time):
+    total_population_vs_time.append([])
+    order_queue_length.append([])
+    wait_time_per_item += [[], []]
+    wait_time = [0 for _ in range(int(simulation_time / 60))]
+    item_num = [0 for _ in range(int(simulation_time / 60))]
+
+    # total_time = []
+
+    for t in range(simulation_time):
         # print(model.print_stat())
         # if time_scheduler.time % 60 == 0:
         #     input()
+        total_population_vs_time[-1].append(model.people_count - model.people_served)
+        order_queue_length[-1].append(model.queue_length())
         time_scheduler.time_pass()
         condition_scheduler.time_pass()
+    total_population_vs_time[-1].append(model.people_count - model.people_served)
+    order_queue_length[-1].append(model.queue_length())
     print(model.print_stat())
+
+    for p in Person.people_list:
+        # if p.served:
+        #     total_time.append(p.total_wait_time.time)
+        if p.served and len(p.items) == 1:
+            index = int((p.enqueued_time - 1) / 60)
+            wait_time[index] += p.total_wait_time.time
+            item_num[index] += 1
+    for i in range(int(simulation_time / 60)):
+        t, n = wait_time[i], item_num[i]
+        if n != 0:
+            wait_time_per_item[-2].append(t / n)
+            wait_time_per_item[-1].append(i + 1)
+
+    # if len(people_served_total[0]) == len(people_served_total[1]):
+    #     people_served_total[0].append(sum(total_time) / len(total_time))
+    # else:
+    #     people_served_total[1].append(sum(total_time) / len(total_time))
 
     print('total_people_arrived:\t{0}'.format(model.people_count))
     print('total_people_served:\t{0}'.format(model.people_served))
@@ -90,3 +131,36 @@ if __name__ == '__main__':
         lambdas.clear()
         run_model(m(window_num=NUM_OF_WINDOW, worker_num=NUM_OF_WORKER, person_generator=generator),
                   simulation_time)
+    f_name = 'Plots/total population vs time.txt'
+    with open(f_name, 'w') as f:
+        f.write('\n'.join([' '.join(map(str, s)) for s in total_population_vs_time]))
+    print('{0} saved'.format(f_name))
+    f_name = 'Plots/wait time per item.txt'
+    with open(f_name, 'w') as f:
+        f.write('\n'.join([' '.join(map(str, s)) for s in wait_time_per_item]))
+    print('{0} saved'.format(f_name))
+    f_name = 'Plots/queue length vs time.txt'
+    with open(f_name, 'w') as f:
+        f.write('\n'.join([' '.join(map(str, s)) for s in order_queue_length]))
+    print('{0} saved'.format(f_name))
+    # with progressbar.ProgressBar(max_value=50) as bar:
+    #     for w in range(1, 51, 1):
+    #         time_scheduler.reset()
+    #         condition_scheduler.reset()
+    #         Person.reset()
+    #         Order.reset()
+    #         lambdas.clear()
+    #         run_model(OneLinePickupModel(window_num=w, worker_num=100, person_generator=generator),
+    #                   simulation_time)
+    #         time_scheduler.reset()
+    #         condition_scheduler.reset()
+    #         Person.reset()
+    #         Order.reset()
+    #         lambdas.clear()
+    #         run_model(MultiLinePickupModel(window_num=w, worker_num=100, person_generator=generator),
+    #                   simulation_time)
+    #         bar.update(w - 1)
+    # f_name = 'Plots/avg time vs window 10 second.txt'
+    # with open(f_name, 'w') as f:
+    #     f.write('\n'.join([' '.join(map(str, s)) for s in people_served_total]))
+    # print('{0} saved'.format(f_name))

@@ -34,6 +34,7 @@ class AbstractModel(metaclass=abc.ABCMeta):
         self.people_count += 1
         person.order_wait_time.start()
         person.total_wait_time.start()
+        person.enqueued_time = time_scheduler.time
 
         def served(person):
             self.people_served += 1
@@ -51,6 +52,10 @@ class AbstractModel(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def stat(self):
+        pass
+
+    @abc.abstractmethod
+    def queue_length(self):
         pass
 
     def func_after_ordered(self, window, person, order):
@@ -101,6 +106,9 @@ class OneLineModel(AbstractModel):
     def exhausted(self, window):
         return self.queue.empty()
 
+    def queue_length(self):
+        return len(self.queue)
+
     def func_after_ready(self, window, person, order):
         person.drink_wait_time.end()
         window.serving = None
@@ -111,7 +119,7 @@ class OneLineModel(AbstractModel):
 
 
 class OneLinePickupModel(AbstractModel):
-    PARALLEL_PICKUP = 5
+    PARALLEL_PICKUP = 10
     PICKUP_SPEED_TO_POOL_SIZE = 0.1
 
     def __init__(self, window_num, worker_num, person_generator):
@@ -155,6 +163,9 @@ class OneLinePickupModel(AbstractModel):
     def exhausted(self, window):
         return self.queue.empty()
 
+    def queue_length(self):
+        return OneLineModel.queue_length(self)
+
     def func_after_ordered(self, window, person, order):
         window.serving = None
         self.pickup_people_pool.add(person)
@@ -195,6 +206,9 @@ class MultiLineModel(OneLineModel):
     def exhausted(self, window):
         return self.queues[self.windows.index(window)].empty()
 
+    def queue_length(self):
+        return sum([len(q) for q in self.queues])
+
     def stat(self):
         return 'model_queue_length:\t{0}'.format('\t'.join([str(len(q)) for q in self.queues]))
 
@@ -219,6 +233,9 @@ class MultiLinePickupModel(OneLinePickupModel):
 
     def exhausted(self, window):
         return MultiLineModel.exhausted(self, window)
+
+    def queue_length(self):
+        return MultiLineModel.queue_length(self)
 
     def stat(self):
         return """model_queue_length:\t{0}
